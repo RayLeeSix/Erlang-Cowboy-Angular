@@ -10,14 +10,24 @@ init(Req, Opts) ->
   Method = cowboy_req:method(Req),
   HasBody = cowboy_req:has_body(Req),
   URLBinding = cowboy_req:binding(v1, Req),
+io:format("Method:~p~n HasBody:~p~n URLBinding:~p~n",[[Method],[HasBody],[URLBinding]]),
   Req2 = dispatch(Method, HasBody, URLBinding, Req),
   {ok, Req2, Opts}.
-
+ 
 
 %% @doc crerate New User
 dispatch(<<"POST">>, true, undefined, Req) ->
-  {ok, Body, Req2} = cowboy_req:body(Req),
-  Json = jiffy:decode(Body, [return_maps]),
+ % {ok, Body, Req2} = cowboy_req:read_body(Req),
+  {ok, Body, Req2} = cowboy_req:read_urlencoded_body(Req),
+ 	io:format("j:~p~n",[Body]),
+ [{Body2,true}]=Body,
+ Body1=erlang:binary_to_list(Body2),
+ % Firstname = proplists:get_value(<<"firstname">>, Body),
+ % Lastname = proplists:get_value(<<"lastname">>, Body),
+ % MobileNo = proplists:get_value(<<"mobileNo">>, Body),
+ % Age = proplists:get_value(<<"age">>, Body),  
+  Json = jiffy:decode(Body1, [return_maps]),
+io:format("j:~p~n",[Json]),
   Firstname = maps:get(<<"firstname">>, Json),
   Lastname = maps:get(<<"lastname">>, Json),
   MobileNo = maps:get(<<"mobileNo">>, Json),
@@ -33,9 +43,9 @@ dispatch(<<"GET">>, false, undefined, Req) ->
   end,
   {atomic, Record} = mnesia:transaction(Query),
   Json = bisphoneTest_Utils:convert(Record),
-  cowboy_req:reply(200, [
-    {<<"content-type">>, <<"application/json; charset=utf-8">>}
-  ], jiffy:encode({Json}), Req);
+  cowboy_req:reply(200,
+    #{<<"content-type">> => <<"application/json; charset=utf-8">>}
+  , jiffy:encode({Json}), Req);
 
 %% @doc find a User
 dispatch(<<"GET">>, false, Binding, Req) ->
@@ -45,9 +55,9 @@ dispatch(<<"GET">>, false, Binding, Req) ->
   end,
   {atomic, Record} = mnesia:transaction(Query),
   Json = bisphoneTest_Utils:convert(Record),
-  cowboy_req:reply(200, [
-    {<<"content-type">>, <<"application/json; charset=utf-8">>}
-  ], jiffy:encode({Json}), Req);
+  cowboy_req:reply(200, 
+    #{<<"content-type">> => <<"application/json; charset=utf-8">>}
+  , jiffy:encode({Json}), Req);
 
 
 %% @doc Update a User Info
@@ -71,9 +81,9 @@ dispatch(<<"PUT">>, true, Id, Req) ->
   end,
   mnesia:transaction(Write),
 
-  cowboy_req:reply(200, [
-    {<<"content-type">>, <<"application/json; charset=utf-8">>}
-  ], jiffy:encode({[{result, ok}]}), Req2);
+  cowboy_req:reply(200, 
+    #{<<"content-type">> => <<"application/json; charset=utf-8">>}
+  , jiffy:encode({[{result, ok}]}), Req2);
 
 
 %% @doc delete a user
@@ -83,9 +93,9 @@ dispatch(<<"DELETE">>, false, Id, Req) ->
   end,
   mnesia:transaction(Delete),
 
-  cowboy_req:reply(200, [
-    {<<"content-type">>, <<"application/json; charset=utf-8">>}
-  ], jiffy:encode({[{result, ok}]}), Req);
+  cowboy_req:reply(200,
+   #{<<"content-type">> => <<"application/json; charset=utf-8">>}
+  , jiffy:encode({[{result, ok}]}), Req);
 
 
 dispatch(<<"POST">>, false, undefined, Req) ->
@@ -96,7 +106,7 @@ dispatch(_, _, undefined, Req) ->
   cowboy_req:reply(405, Req).
 
 createUser(Firstname, Lastname, MobileNo, Age, Req) ->
-  {Mega, Sec, Micro} = erlang:now(),
+  {Mega, Sec, Micro} = erlang:timestamp(),
   Id = list_to_binary(integer_to_list((Mega*1000000 + Sec)*1000 + Micro)),
   Write = fun() ->
     User = #tbuser{
@@ -109,7 +119,7 @@ createUser(Firstname, Lastname, MobileNo, Age, Req) ->
     mnesia:write(User)
   end,
   mnesia:transaction(Write),
-
-  cowboy_req:reply(200, [
-    {<<"content-type">>, <<"application/json; charset=utf-8">>}
-  ], jiffy:encode({[{result, ok}]}), Req).
+io:format("reply 200~n"),
+  cowboy_req:reply(200,
+    #{<<"content-type">> => <<"application/json; charset=utf-8">>},
+    jiffy:encode({[{result, ok}]}), Req).

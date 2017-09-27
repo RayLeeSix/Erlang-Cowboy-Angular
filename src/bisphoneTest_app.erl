@@ -23,8 +23,8 @@ findAll() ->
   mnesia:transaction(Query).
 
 get_timestamp() ->
-  io:format("~p~n : ",[erlang:now()]),
-  {Mega, Sec, Micro} = erlang:now(),
+  io:format("~p~n : ",[erlang:timestamp()]),
+  {Mega, Sec, Micro} = erlang:timestamp(),
   list_to_binary(integer_to_list((Mega*1000000 + Sec)*1000 + Micro)).
 
 time(0) ->
@@ -50,8 +50,8 @@ start(_StartType, _StartArgs) ->
   Dispatch  = cowboy_router:compile(Routes),
   Port      = port(),
   TransOpts = [{port, Port}],
-  ProtoOpts = [{env, [{dispatch, Dispatch}]}],
-  {ok, _}   = cowboy:start_http(http, ?C_ACCEPTORS, TransOpts, ProtoOpts),
+%  ProtoOpts = [{env, [{dispatch, Dispatch}]}],
+  {ok, _}   = cowboy:start_clear(http,TransOpts, #{env => #{dispatch => Dispatch}}),
   bisphoneTest_sup:start_link().
 
 stop(_State) ->
