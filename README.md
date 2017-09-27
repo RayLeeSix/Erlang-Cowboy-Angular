@@ -8,7 +8,7 @@ This is a Simple application using Erlang and cowboy framework as a backend and 
 To build you will need Erlang OTP/19 and Git.
 
 # Installing
-$ git clone https://github.com/Hosnidokht/Erlang-Cowboy-Angular.git
+$ git clone https://github.com/RayLeeSix/Erlang-Cowboy-Angular.git
 
 $ cd Erlang-Cowboy-Angular
 
